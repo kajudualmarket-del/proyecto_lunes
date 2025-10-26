@@ -70,7 +70,7 @@ services:
     networks:
       - internal_net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: ["CMD", "curl", "-f", "http://localhost:4200/"]
       interval: 15s
       timeout: 10s
       retries: 5
