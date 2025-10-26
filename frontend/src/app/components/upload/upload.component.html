@@ -1,0 +1,104 @@
+<div class="upload-container">
+  <h2>Bienvenido 👋</h2>
+  <p>Sube tu archivo Excel (.xls o .xlsx)</p>
+
+  <input type="file" (change)="onFileSelected($event)" />
+  <button (click)="uploadFile()">Subir archivo</button>
+
+  <div *ngIf="uploadProgress > 0" class="progress-bar">
+    <div class="progress" [style.width.%]="uploadProgress"></div>
+  </div>
+
+  <p>{{ message }}</p>
+
+  <h3>Archivos Subidos</h3>
+  <table *ngIf="files.length > 0">
+    <tr>
+      <th>Nombre</th>
+      <th>Tamaño</th>
+      <th>Acciones</th>
+    </tr>
+    <tr *ngFor="let file of files">
+      <td>{{ file.filename }}</td>
+      <td>{{ (file.filesize / 1024).toFixed(1) }} KB</td>
+      <td>
+        <button (click)="showPreview(file.id!)">Ver</button>
+        <button (click)="insertData(file.id!)">Insertar</button>
+        <button (click)="deleteFile(file.id!)">Eliminar</button>
+      </td>
+    </tr>
+  </table><div class="upload-container">
+  <h2>Bienvenido 👋</h2>
+  <p>Sube tu archivo Excel (.xls o .xlsx)</p>
+
+  <input type="file" (change)="onFileSelected($event)" />
+  <button (click)="uploadFile()">Subir archivo</button>
+
+  <div *ngIf="uploadProgress > 0" class="progress-bar">
+    <div class="progress" [style.width.%]="uploadProgress"></div>
+  </div>
+
+  <p>{{ message }}</p>
+
+  <h3>Archivos Subidos</h3>
+  <table *ngIf="files.length > 0">
+    <tr>
+      <th>Nombre</th>
+      <th>Tamaño</th>
+      <th>Acciones</th>
+    </tr>
+    <tr *ngFor="let file of files">
+      <td>{{ file.filename }}</td>
+      <td>{{ (file.filesize / 1024).toFixed(1) }} KB</td>
+      <td>
+        <button (click)="showPreview(file.id!)">Ver</button>
+        <button (click)="insertData(file.id!)">Insertar</button>
+        <button (click)="deleteFile(file.id!)">Eliminar</button>
+      </td>
+    </tr>
+  </table>
+
+  <div *ngIf="previewData">
+    <h3>Previsualización</h3>
+    <div *ngFor="let hoja of previewData.hojas">
+      <h4>{{ hoja.nombre }}</h4>
+      <p *ngIf="!hoja.datos || hoja.datos.length === 0">
+        Esta hoja no tiene datos.
+      </p>
+      <table *ngIf="hoja.datos && hoja.datos.length > 0">
+        <tr>
+          <th *ngFor="let key of hoja.columnas">{{ key }}</th>
+        </tr>
+        <tr *ngFor="let row of hoja.datos">
+          <td *ngFor="let key of hoja.columnas">{{ row[key] }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NUEVO: Sección de gráfico -->
+  <div *ngIf="chartData">
+    <h3>Estadísticas de Productos</h3>
+    <app-chart [chartDataInput]="chartData"></app-chart>
+  </div>
+</div>
+
+
+  <div *ngIf="previewData">
+    <h3>Previsualización</h3>
+    <div *ngFor="let hoja of previewData.hojas">
+      <h4>{{ hoja.nombre }}</h4>
+      <p *ngIf="!hoja.datos || hoja.datos.length === 0">
+        Esta hoja no tiene datos.
+      </p>
+      <table *ngIf="hoja.datos && hoja.datos.length > 0">
+        <tr>
+          <th *ngFor="let key of hoja.columnas">{{ key }}</th>
+        </tr>
+        <tr *ngFor="let row of hoja.datos">
+          <td *ngFor="let key of hoja.columnas">{{ row[key] }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
