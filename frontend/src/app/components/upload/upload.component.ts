@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'; 
+import { Component } from '@angular/core';
 import { HttpEventType } from '@angular/common/http';
 import { ExcelService } from '../../services/excel.service';
 import { ExcelFile } from '../../models/excel-file.model';
@@ -19,9 +19,8 @@ export class UploadComponent {
   files: ExcelFile[] = [];
   previewData: any = null;
   chartData: any = null;
-
-  emptySheets: string[] = []; // 🆕 Guardará los nombres de hojas vacías
-  inserting = false; // 🆕 Controla animación de progreso real
+  emptySheets: string[] = [];
+  inserting = false;
 
   Object = Object;
 
@@ -48,7 +47,6 @@ export class UploadComponent {
 
     this.previewData = null;
     this.chartData = null;
-
     this.uploadProgress = 0;
     this.message = '';
 
@@ -83,7 +81,6 @@ export class UploadComponent {
     this.excelService.getExcelPreview(fileId).subscribe({
       next: (data) => {
         this.previewData = data;
-
         if (Array.isArray(data)) {
           data.forEach((sheet: any) => {
             if (!sheet.datos || sheet.datos.length === 0) {
@@ -91,7 +88,6 @@ export class UploadComponent {
             }
           });
         }
-
         if (this.emptySheets.length > 0) {
           alert(`⚠️ Las siguientes hojas están vacías:\n${this.emptySheets.join(', ')}`);
         }
@@ -118,7 +114,6 @@ export class UploadComponent {
         this.uploadProgress = 100;
         this.inserting = false;
         button.classList.remove('loading');
-
         alert('✅ Datos insertados correctamente');
         this.fetchChartData();
       },
@@ -142,7 +137,6 @@ export class UploadComponent {
     }
   }
 
-  // ✅ Corregido — el servicio ya devuelve el array limpio
   fetchChartData(): void {
     this.excelService.getChartData().subscribe({
       next: (chart) => (this.chartData = chart || []),

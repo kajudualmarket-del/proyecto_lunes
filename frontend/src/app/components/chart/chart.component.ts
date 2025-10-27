@@ -11,12 +11,11 @@ import { ChartData, ChartOptions } from 'chart.js';
   imports: [CommonModule, NgChartsModule]
 })
 export class ChartComponent implements OnChanges {
-  @Input() chartDataInput: any; // 🔹 Datos que llegan del padre
+  @Input() chartDataInput: any; // Datos entrantes (varios formatos)
 
-  // 🔹 Referencia directa al gráfico (para actualizar sin duplicar)
-  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+  // Tipado explícito del ViewChild para evitar problemas al llamar update()
+  @ViewChild(BaseChartDirective, { static: false }) chart?: BaseChartDirective<'bar'>;
 
-  // 🔹 Controla cuándo mostrar el gráfico
   public hasData = false;
 
   public chartData: ChartData<'bar'> = {
@@ -54,33 +53,59 @@ export class ChartComponent implements OnChanges {
     animation: { duration: 1000, easing: 'easeOutQuart' }
   };
 
-  // 🔹 Detecta cambios en los datos
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['chartDataInput'] && Array.isArray(this.chartDataInput)) {
-      const products = this.chartDataInput.map((item: any) => item.product ?? 'Desconocido');
-      const quantities = this.chartDataInput.map((item: any) => item.quantity ?? 0);
+    if (!changes['chartDataInput']) return;
 
-      // Muestra el gráfico solo si hay datos válidos
-      this.hasData = products.length > 0 && quantities.some(q => q > 0);
+    const incoming = this.chartDataInput ?? [];
 
-      this.chartData = {
-        labels: products,
-        datasets: [
-          {
-            label: 'Cantidad',
-            data: quantities,
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            borderRadius: 6,
-            hoverBackgroundColor: 'rgba(75, 192, 192, 0.8)',
-          }
-        ]
-      };
+    if (!Array.isArray(incoming)) {
+      // No es un array: no hay datos válidos
+      this.hasData = false;
+      this.chartData = { labels: [], datasets: [] };
+      return;
+    }
 
-      // 🔹 Actualiza el gráfico existente sin duplicarlo
-      if (this.chart) {
+    // Soportar varias formas: { producto, total } o { product, quantity } o { producto, cantidad }
+    const products: string[] = incoming.map((item: any) => {
+      return (item?.producto ?? item?.product ?? 'Desconocido') + '';
+    });
+
+    const quantities: number[] = incoming.map((item: any) => {
+      const raw = item?.total ?? item?.quantity ?? item?.cantidad ?? 0;
+      // Convertir de forma segura a número
+      const n = (typeof raw === 'number') ? raw : Number(String(raw).replace(',', '.'));
+      return Number.isFinite(n) ? Math.round(n) : 0;
+    });
+
+    this.hasData = products.length > 0 && quantities.some(q => q > 0);
+
+    this.chartData = {
+      labels: products,
+      datasets: [
+        {
+          label: 'Cantidad',
+          data: quantities,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1,
+          borderRadius: 6,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - propiedad usada por ng2-charts for hover style
+          hoverBackgroundColor: 'rgba(75, 192, 192, 0.8)',
+        }
+      ]
+    };
+
+    // Actualiza el chart de forma segura (si ya está montado)
+    if (this.chart && typeof this.chart.update === 'function') {
+      try {
         this.chart.update();
+      } catch (err) {
+        // si falla la actualización no rompemos la app — dejamos los datos listos para dibujar
+        // y lo registramos en consola para debugging.
+        // No borro nada ni toco lógica ajena — solo prevengo el crash.
+        // eslint-disable-next-line no-console
+        console.warn('Error al actualizar chart:', err);
       }
     }
   }

@@ -1,4 +1,3 @@
-# backend/app/main.py
 """
 Punto de entrada principal del backend.
 Inicializa FastAPI, configura las rutas, CORS, base de datos y logs.
@@ -14,10 +13,15 @@ import os
 # Crear instancia de la aplicación
 app = FastAPI(title="Excel Uploader API", version="1.0")
 
-# ⚙️ CORS - mover aquí arriba y permitir más orígenes en desarrollo
+# ⚙️ CORS - permitir orígenes locales
+origins = [
+    "http://localhost:8080",  # Frontend Angular
+    "http://127.0.0.1:8080"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_origins=origins,  # permite Angular
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +33,7 @@ Base.metadata.create_all(bind=engine)
 # Configuración de logs
 LOG_DIR = "app/logs"
 os.makedirs(LOG_DIR, exist_ok=True)
+
 logging.basicConfig(
     filename=f"{LOG_DIR}/app.log",
     level=logging.INFO,

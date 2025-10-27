@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import crud, schemas, utils
 from dotenv import load_dotenv
-from typing import List
 import shutil
 import time
 import logging
@@ -31,6 +30,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 # ================================
 # Funciones auxiliares internas
 # ================================
@@ -46,31 +46,42 @@ def get_file_size_mb(file_path: str) -> float:
     return size_bytes / (1024 * 1024)
 
 
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza los nombres de columnas: strip() + lower()
+    Esto evita falsos 'columnas faltantes' por espacios o mayúsculas.
+    """
+    new_cols = []
+    for c in df.columns:
+        # Convertir cualquier tipo a string, strip y lower
+        try:
+            c_str = str(c).strip().lower()
+        except Exception:
+            c_str = str(c)
+        new_cols.append(c_str)
+    df.columns = new_cols
+    return df
+
+
 # ================================
 # ENDPOINTS PRINCIPALES
 # ================================
 
 @router.post("/upload", response_model=schemas.APIResponse)
 async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """
-    Sube un archivo Excel, lo valida y registra sus metadatos.
-    """
+    """Sube un archivo Excel, lo valida y registra sus metadatos."""
 
-    # Validar extensión
     if not allowed_file(file.filename):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos .xls o .xlsx")
 
-    # Guardar archivo temporalmente
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Validar tamaño
     if get_file_size_mb(file_path) > MAX_FILE_SIZE_MB:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
 
-    # Registrar metadatos
     new_file = schemas.ExcelFileCreate(
         filename=file.filename,
         filepath=file_path,
@@ -92,16 +103,12 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
 
 @router.get("/preview/{file_id}")
 def preview_excel(file_id: int, db: Session = Depends(get_db)):
-    """
-    Lee el contenido del Excel subido y valida las hojas y columnas.
-    Devuelve los datos de cada hoja válida en formato compatible con Angular.
-    """
+    """Lee el contenido del Excel subido y valida las hojas y columnas."""
 
     db_file = crud.get_excel_file(db, file_id)
     if not db_file:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
 
-    # Cargar Excel con pandas
     try:
         excel_data = pd.read_excel(db_file.filepath, sheet_name=None)
     except Exception as e:
@@ -110,21 +117,27 @@ def preview_excel(file_id: int, db: Session = Depends(get_db)):
     required_columns = ["nombre", "direccion", "telefono", "producto", "cantidad"]
     result = {}
 
-    # Validar cada hoja
     for sheet_name, df in excel_data.items():
-        if df.empty:
+        # Limpiar hojas completamente vacías
+        if df is None or df.empty:
             result[sheet_name] = {"mensaje": "La hoja no contiene datos", "datos": []}
             continue
 
-        # Validar columnas
+        # Normalizar columnas y chequear
+        df = _normalize_columns(df)
+
         try:
             utils.validate_excel_columns(df.columns.tolist(), required_columns)
+            # Seleccionar y completar valores faltantes
             df = df[required_columns].fillna("")
-            result[sheet_name] = {"mensaje": "Hoja válida", "datos": df.head(10).to_dict(orient="records")}
+            # Retornar primeros 10 registros para la previsualización
+            result[sheet_name] = {
+                "mensaje": "Hoja válida",
+                "datos": df.head(10).to_dict(orient="records"),
+            }
         except HTTPException as e:
             result[sheet_name] = {"mensaje": str(e.detail), "datos": []}
 
-    # 🔧 Transformar formato para Angular (lista en lugar de objeto)
     formatted_result = [
         {"nombre": sheet, "mensaje": info["mensaje"], "datos": info["datos"]}
         for sheet, info in result.items()
@@ -135,10 +148,7 @@ def preview_excel(file_id: int, db: Session = Depends(get_db)):
 
 @router.post("/insert/{file_id}", response_model=schemas.APIResponse)
 def insert_excel_data(file_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    """
-    Inserta los datos del Excel validado en la base de datos.
-    Simula una barra de progreso en el frontend (0 a 100%).
-    """
+    """Inserta los datos del Excel validado en la base de datos."""
 
     db_file = crud.get_excel_file(db, file_id)
     if not db_file:
@@ -153,25 +163,47 @@ def insert_excel_data(file_id: int, background_tasks: BackgroundTasks, db: Sessi
     total_inserted = 0
 
     for sheet_name, df in excel_data.items():
-        if df.empty:
+        if df is None or df.empty:
             continue
+
+        # Normalizar columnas
+        df = _normalize_columns(df)
+
         try:
             utils.validate_excel_columns(df.columns.tolist(), required_columns)
             df = df[required_columns].fillna("")
-            data_objects = [
-                schemas.ExcelDataCreate(
-                    nombre=row["nombre"],
-                    direccion=row["direccion"],
-                    telefono=row["telefono"],
-                    producto=row["producto"],
-                    cantidad=int(row["cantidad"]),
+
+            # Conversión segura de tipos:
+            data_objects = []
+            for _, row in df.iterrows():
+                # telefono como string (evitar pydantic error)
+                telefono_val = row.get("telefono", "")
+                telefono_val = "" if pd.isna(telefono_val) else str(telefono_val)
+
+                # cantidad robusto (int desde float o string)
+                cantidad_val = row.get("cantidad", 0)
+                try:
+                    cantidad_int = int(cantidad_val)
+                except Exception:
+                    try:
+                        cantidad_int = int(float(cantidad_val))
+                    except Exception:
+                        cantidad_int = 0
+
+                data_obj = schemas.ExcelDataCreate(
+                    nombre=str(row.get("nombre", "")),
+                    direccion=str(row.get("direccion", "")),
+                    telefono=telefono_val,
+                    producto=str(row.get("producto", "")),
+                    cantidad=cantidad_int,
                     hoja=sheet_name,
                     archivo_id=file_id,
                 )
-                for _, row in df.iterrows()
-            ]
-            inserted = crud.insert_excel_data(db, data_objects)
-            total_inserted += inserted
+                data_objects.append(data_obj)
+
+            if data_objects:
+                inserted = crud.insert_excel_data(db, data_objects)
+                total_inserted += inserted
 
         except HTTPException as e:
             logger.warning(f"Hoja '{sheet_name}' inválida: {e.detail}")
@@ -179,7 +211,7 @@ def insert_excel_data(file_id: int, background_tasks: BackgroundTasks, db: Sessi
 
     logger.info(f"{total_inserted} registros insertados del archivo {db_file.filename}")
 
-    # Simulación de barra de carga (frontend usa eventos o polling)
+    # Simulación de progreso (opcional)
     for progress in range(0, 101, 20):
         time.sleep(0.1)
         logger.info(f"Progreso de inserción: {progress}%")
@@ -195,15 +227,10 @@ def insert_excel_data(file_id: int, background_tasks: BackgroundTasks, db: Sessi
 
 @router.get("/", response_model=schemas.APIResponse)
 def list_uploaded_files(db: Session = Depends(get_db)):
-    """
-    Devuelve la lista de archivos Excel registrados en la base de datos.
-    """
+    """Devuelve la lista de archivos Excel registrados en la base de datos."""
     files = crud.get_all_excel_files(db)
-
-    # ✅ FIX Pydantic serialization (convierte objetos SQLAlchemy a modelos válidos)
     serialized_files = [
-        schemas.ExcelFileResponse.model_validate(f, from_attributes=True)
-        for f in files
+        schemas.ExcelFileResponse.model_validate(f, from_attributes=True) for f in files
     ]
 
     return utils.response_json(
@@ -217,9 +244,7 @@ def list_uploaded_files(db: Session = Depends(get_db)):
 
 @router.delete("/{file_id}", response_model=schemas.APIResponse)
 def delete_excel_file(file_id: int, db: Session = Depends(get_db)):
-    """
-    Elimina un archivo Excel y sus datos de la base de datos y del sistema.
-    """
+    """Elimina un archivo Excel y sus datos de la base de datos y del sistema."""
     db_file = crud.get_excel_file(db, file_id)
     if not db_file:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
@@ -238,15 +263,9 @@ def delete_excel_file(file_id: int, db: Session = Depends(get_db)):
     )
 
 
-# ================================
-# 📊 NUEVO ENDPOINT: Datos del gráfico
-# ================================
 @router.get("/chart", response_model=schemas.APIResponse)
 def get_chart_data(db: Session = Depends(get_db)):
-    """
-    Devuelve datos agregados para el gráfico de productos.
-    Suma la cantidad de cada producto registrado.
-    """
+    """Devuelve datos agregados para el gráfico de productos."""
     try:
         data = crud.get_chart_data(db)
         return utils.response_json(
