@@ -17,7 +17,7 @@ class ExcelFile(Base):
     filename = Column(String(255), nullable=False)
     filepath = Column(String(500), nullable=False)
     filesize = Column(Integer, nullable=False)
-    filetype = Column(String(50), nullable=False)
+    filetype = Column(String(255), nullable=False)
     upload_date = Column(DateTime(timezone=True), server_default=func.now())
 
 

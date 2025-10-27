@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: 0 8px 30px var(--shadow);
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+canvas {
+  width: 100% !important;
+  height: 400px !important;
+}
+
+h3 {
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 20px;
+}

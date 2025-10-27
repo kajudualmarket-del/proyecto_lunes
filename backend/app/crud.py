@@ -1,10 +1,10 @@
-# backend/app/crud.py
 """
 Operaciones CRUD sobre la base de datos.
 Encapsula toda la lógica de acceso a datos usando SQLAlchemy.
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app import models, schemas
 
 # ------------------ ExcelFile CRUD ------------------
@@ -64,3 +64,23 @@ def get_all_excel_data(db: Session):
     Obtiene todos los datos cargados desde los Excels.
     """
     return db.query(models.ExcelData).all()
+
+
+# ------------------ 📊 NUEVA FUNCIÓN PARA EL GRÁFICO ------------------
+
+def get_chart_data(db: Session):
+    """
+    Devuelve datos agregados por producto para el gráfico.
+    Agrupa por 'producto' y suma las cantidades.
+    """
+    results = (
+        db.query(
+            models.ExcelData.producto.label("producto"),
+            func.sum(models.ExcelData.cantidad).label("total")
+        )
+        .group_by(models.ExcelData.producto)
+        .all()
+    )
+
+    # Convertimos los resultados a una lista de diccionarios
+    return [{"producto": r.producto, "total": r.total} for r in results]

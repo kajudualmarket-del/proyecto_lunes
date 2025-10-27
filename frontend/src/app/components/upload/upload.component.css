@@ -1,57 +1,232 @@
 .upload-container {
-  width: 80%;
-  margin: 0 auto;
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 30px;
+  border-radius: 16px;
+  background: var(--card-bg, #1e1e2f);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
   text-align: center;
+  transition: background 0.4s ease;
+}
 
-  h2 {
-    color: #2a3f54;
+.header-section h2 {
+  color: #6c63ff;
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #aaa;
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.upload-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.file-button,
+.upload-btn {
+  background: linear-gradient(135deg, #6c63ff, #00b7ff);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.file-button:hover,
+.upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #333;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, #6c63ff, #00b7ff);
+  text-align: right;
+  color: white;
+  font-size: 12px;
+  line-height: 12px;
+  transition: width 0.3s ease;
+  border-radius: 6px;
+  padding-right: 6px;
+}
+
+.status-msg {
+  font-weight: 500;
+  margin: 10px 0 25px;
+}
+.status-msg.success {
+  color: #00ff9d;
+}
+.status-msg.error {
+  color: #ff5c5c;
+}
+
+.file-table,
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.file-table th,
+.data-table th {
+  background: #6c63ff;
+  color: white;
+  padding: 10px;
+}
+
+.file-table td,
+.data-table td {
+  background: #282846;
+  padding: 8px;
+  color: #ddd;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: white;
+  font-weight: 500;
+}
+
+.btn.view {
+  background: #00b7ff;
+}
+.btn.insert {
+  background: #4caf50;
+}
+.btn.delete {
+  background: #f44336;
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+/* 🆕 Animación suave al presionar */
+.btn:active {
+  transform: scale(0.97);
+  filter: brightness(0.9);
+}
+
+.preview-section {
+  margin-top: 40px;
+}
+
+.sheet-preview {
+  margin-top: 20px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.empty-sheet {
+  color: #ffcc00;
+  font-style: italic;
+}
+
+.chart-section {
+  margin-top: 50px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.no-files {
+  font-style: italic;
+  color: #888;
+  margin-bottom: 15px;
+}
+
+/* 🔄 Animación de carga para botón Insertar */
+.btn.insert {
+  position: relative;
+  overflow: hidden;
+}
+
+/* El spinner por defecto está oculto */
+.loading-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #fff;
+  border-right: 2px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: spin 0.8s linear infinite;
+}
+
+/* La animación del giro */
+@keyframes spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
   }
-
-  input[type="file"] {
-    margin: 10px 0;
+  to {
+    transform: translateY(-50%) rotate(360deg);
   }
+}
 
-  button {
-    margin: 5px;
-    padding: 8px 16px;
-    background-color: #0078d7;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    &:hover {
-      background-color: #005fa3;
-    }
-  }
+/* Muestra el spinner mientras se está insertando (0–99%) */
+.btn.insert.loading .loading-spinner {
+  display: inline-block;
+}
 
-  .progress-bar {
-    width: 100%;
-    height: 10px;
-    background: #e0e0e0;
-    margin: 10px 0;
-    border-radius: 5px;
+.btn.insert.loading .btn-text {
+  opacity: 0.5;
+}
 
-    .progress {
-      height: 100%;
-      background: linear-gradient(to right, #0078d7, #00c8ff);
-      border-radius: 5px;
-      transition: width 0.3s;
-    }
-  }
+/* 🆕 Efecto hover más visible en los botones de acción */
+.btn.view:hover {
+  background: #00d0ff;
+}
+.btn.insert:hover {
+  background: #66d366;
+}
+.btn.delete:hover {
+  background: #ff5c5c;
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-
-    th {
-      background-color: #0078d7;
-      color: white;
-    }
-  }
+/* 🆕 Transición para tabla y filas */
+.file-table tr {
+  transition: background 0.2s ease;
+}
+.file-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
 }

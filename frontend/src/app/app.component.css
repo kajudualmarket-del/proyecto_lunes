@@ -1,0 +1,18 @@
+.theme-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 25px;
+}
+
+.theme-toggle button {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-elevated);
+}

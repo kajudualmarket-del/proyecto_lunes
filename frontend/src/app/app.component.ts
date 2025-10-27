@@ -12,5 +12,18 @@ import { ChartComponent } from './components/chart/chart.component';
 export class AppComponent {
   title = 'trabajo-lunes';
 
-  // No ponemos datos de ejemplo, el chart tomará los datos del UploadComponent
+  // === 🌙 NUEVO: Control del modo oscuro ===
+  isDarkTheme = false;
+
+  toggleTheme() {
+    this.isDarkTheme = !this.isDarkTheme;
+    const body = document.body;
+    if (this.isDarkTheme) {
+      body.classList.add('dark-theme');
+    } else {
+      body.classList.remove('dark-theme');
+    }
+  }
+
+  // No tocamos nada de tu lógica existente
 }

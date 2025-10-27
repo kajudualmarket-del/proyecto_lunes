@@ -1,14 +1,1 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-
-import { AppComponent } from './app.component';
-
-
-@NgModule({
-  imports: [
-    BrowserModule,
-    AppComponent // 👈 Importa el standalone component en bootstrap
-  ],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
+// ⚠️ Este archivo ya no se usa porque la app está en modo standalone.

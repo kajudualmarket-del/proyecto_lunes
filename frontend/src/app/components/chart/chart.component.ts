@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgChartsModule } from 'ng2-charts';
+import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 
 @Component({
@@ -11,8 +11,13 @@ import { ChartData, ChartOptions } from 'chart.js';
   imports: [CommonModule, NgChartsModule]
 })
 export class ChartComponent implements OnChanges {
-  // Cambiado de 'data' a 'chartData' para que coincida con el binding del AppComponent
-  @Input() chartDataInput: any; // Recibe los datos desde AppComponent
+  @Input() chartDataInput: any; // 🔹 Datos que llegan del padre
+
+  // 🔹 Referencia directa al gráfico (para actualizar sin duplicar)
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+
+  // 🔹 Controla cuándo mostrar el gráfico
+  public hasData = false;
 
   public chartData: ChartData<'bar'> = {
     labels: [],
@@ -24,27 +29,59 @@ export class ChartComponent implements OnChanges {
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          color: '#333',
+          font: { size: 13, family: 'Poppins, sans-serif' }
+        }
       },
       title: {
         display: true,
-        text: 'Estadísticas de Productos'
+        text: 'Estadísticas de Productos',
+        color: '#2a3f54',
+        font: { size: 18, weight: 'bold', family: 'Poppins, sans-serif' }
       }
-    }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#555' },
+        grid: { display: false }
+      },
+      y: {
+        ticks: { color: '#555' },
+        grid: { color: '#e0e0e0' }
+      }
+    },
+    animation: { duration: 1000, easing: 'easeOutQuart' }
   };
 
+  // 🔹 Detecta cambios en los datos
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['chartDataInput'] && this.chartDataInput) {
-      // Suponemos que chartDataInput es un arreglo de objetos { product: string, quantity: number }
-      this.chartData.labels = this.chartDataInput.map((item: any) => item.product);
-      this.chartData.datasets = [
-        {
-          label: 'Cantidad',
-          data: this.chartDataInput.map((item: any) => item.quantity),
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        }
-      ];
+    if (changes['chartDataInput'] && Array.isArray(this.chartDataInput)) {
+      const products = this.chartDataInput.map((item: any) => item.product ?? 'Desconocido');
+      const quantities = this.chartDataInput.map((item: any) => item.quantity ?? 0);
+
+      // Muestra el gráfico solo si hay datos válidos
+      this.hasData = products.length > 0 && quantities.some(q => q > 0);
+
+      this.chartData = {
+        labels: products,
+        datasets: [
+          {
+            label: 'Cantidad',
+            data: quantities,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            borderRadius: 6,
+            hoverBackgroundColor: 'rgba(75, 192, 192, 0.8)',
+          }
+        ]
+      };
+
+      // 🔹 Actualiza el gráfico existente sin duplicarlo
+      if (this.chart) {
+        this.chart.update();
+      }
     }
   }
 }

@@ -1,4 +1,3 @@
-# backend/app/schemas.py
 """
 Definición de los esquemas Pydantic para validar y serializar datos.
 Estos se usan para entrada y salida en los endpoints de FastAPI.
@@ -14,15 +13,17 @@ class ExcelFileBase(BaseModel):
     filesize: int
     filetype: str
 
+
 class ExcelFileCreate(ExcelFileBase):
     pass
+
 
 class ExcelFileResponse(ExcelFileBase):
     id: int
     upload_date: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ actualizado para Pydantic v2
 
 
 class ExcelDataBase(BaseModel):
@@ -34,14 +35,16 @@ class ExcelDataBase(BaseModel):
     hoja: str
     archivo_id: int
 
+
 class ExcelDataCreate(ExcelDataBase):
     pass
+
 
 class ExcelDataResponse(ExcelDataBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ actualizado para Pydantic v2
 
 
 # Estructura general de la respuesta estandarizada

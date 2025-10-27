@@ -14,6 +14,15 @@ import os
 # Crear instancia de la aplicación
 app = FastAPI(title="Excel Uploader API", version="1.0")
 
+# ⚙️ CORS - mover aquí arriba y permitir más orígenes en desarrollo
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Crear todas las tablas (si no existen)
 Base.metadata.create_all(bind=engine)
 
@@ -24,15 +33,6 @@ logging.basicConfig(
     filename=f"{LOG_DIR}/app.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-# CORS para permitir comunicación con Angular
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # puede restringirse según sea necesario
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 # Incluir las rutas del módulo de archivos

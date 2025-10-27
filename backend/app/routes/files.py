@@ -1,4 +1,3 @@
-# backend/app/routes/files.py
 """
 Rutas para la gestión de archivos Excel:
 - Subir y validar archivos Excel (.xls, .xlsx)
@@ -91,11 +90,11 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
     )
 
 
-@router.get("/preview/{file_id}", response_model=schemas.APIResponse)
+@router.get("/preview/{file_id}")
 def preview_excel(file_id: int, db: Session = Depends(get_db)):
     """
     Lee el contenido del Excel subido y valida las hojas y columnas.
-    Devuelve los datos de cada hoja válida.
+    Devuelve los datos de cada hoja válida en formato compatible con Angular.
     """
 
     db_file = crud.get_excel_file(db, file_id)
@@ -125,13 +124,13 @@ def preview_excel(file_id: int, db: Session = Depends(get_db)):
         except HTTPException as e:
             result[sheet_name] = {"mensaje": str(e.detail), "datos": []}
 
-    return utils.response_json(
-        status="success",
-        type="preview",
-        title="Vista previa del Excel",
-        message="Archivo leído correctamente",
-        data=result,
-    )
+    # 🔧 Transformar formato para Angular (lista en lugar de objeto)
+    formatted_result = [
+        {"nombre": sheet, "mensaje": info["mensaje"], "datos": info["datos"]}
+        for sheet, info in result.items()
+    ]
+
+    return formatted_result
 
 
 @router.post("/insert/{file_id}", response_model=schemas.APIResponse)
@@ -200,12 +199,19 @@ def list_uploaded_files(db: Session = Depends(get_db)):
     Devuelve la lista de archivos Excel registrados en la base de datos.
     """
     files = crud.get_all_excel_files(db)
+
+    # ✅ FIX Pydantic serialization (convierte objetos SQLAlchemy a modelos válidos)
+    serialized_files = [
+        schemas.ExcelFileResponse.model_validate(f, from_attributes=True)
+        for f in files
+    ]
+
     return utils.response_json(
         status="success",
         type="list",
         title="Archivos registrados",
         message="Lista de archivos cargados",
-        data={"files": files},
+        data={"files": serialized_files},
     )
 
 
@@ -230,3 +236,25 @@ def delete_excel_file(file_id: int, db: Session = Depends(get_db)):
         title="Eliminación completada",
         message=f"Archivo '{db_file.filename}' eliminado correctamente.",
     )
+
+
+# ================================
+# 📊 NUEVO ENDPOINT: Datos del gráfico
+# ================================
+@router.get("/chart", response_model=schemas.APIResponse)
+def get_chart_data(db: Session = Depends(get_db)):
+    """
+    Devuelve datos agregados para el gráfico de productos.
+    Suma la cantidad de cada producto registrado.
+    """
+    try:
+        data = crud.get_chart_data(db)
+        return utils.response_json(
+            status="success",
+            type="chart",
+            title="Datos para el gráfico",
+            message="Datos agregados obtenidos correctamente",
+            data={"chart": data},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener datos del gráfico: {e}")
