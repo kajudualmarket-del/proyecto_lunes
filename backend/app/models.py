@@ -7,6 +7,7 @@ Aquí se representan las tablas principales del sistema.
 from sqlalchemy import Column, Integer, String, DateTime, func
 from app.database import Base
 
+# Modelo que representa los metadatos de los archivos Excel subidos
 class ExcelFile(Base):
     """
     Modelo para almacenar metadatos de los archivos Excel subidos.
@@ -20,7 +21,7 @@ class ExcelFile(Base):
     filetype = Column(String(255), nullable=False)
     upload_date = Column(DateTime(timezone=True), server_default=func.now())
 
-
+# Modelo que representa cada fila de datos proveniente de un Excel
 class ExcelData(Base):
     """
     Modelo para almacenar los datos de cada fila de los Excel validados.
