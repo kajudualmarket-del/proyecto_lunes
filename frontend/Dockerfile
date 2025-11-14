@@ -7,9 +7,14 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install -g @angular/cli@16.2.16
+# ✅ CLI alineado con Angular 20
+RUN npm install -g @angular/cli@20.3.6
+
+# ✅ Manejo de conflictos de dependencias
 RUN npm ci --legacy-peer-deps
-RUN npm install --save-dev @angular-devkit/build-angular
+
+# 🚫 Ya no se necesita (provocaba el error)
+# RUN npm install --save-dev @angular-devkit/build-angular
 
 COPY . .
 
@@ -24,10 +29,8 @@ RUN npm install -g http-server && npm cache clean --force
 
 WORKDIR /app
 
-# Copiamos SOLO lo que Angular genera
-COPY --from=build /app/dist ./ 
+COPY --from=build /app/dist ./
 
 EXPOSE 8080
 
 CMD ["http-server", "/app", "-p", "8080", "--cors", "-c-1"]
-

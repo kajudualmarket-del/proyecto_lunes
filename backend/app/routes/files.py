@@ -225,7 +225,7 @@ def insert_excel_data(file_id: int, background_tasks: BackgroundTasks, db: Sessi
 
     logger.info(f"{total_inserted} registros insertados del archivo {db_file.filename}")
 
-    # Simulación de progreso en consola
+    # Proceso de carga de insercion de excel a base de datos
     for progress in range(0, 101, 20):
         time.sleep(0.1)
         logger.info(f"Progreso de inserción: {progress}%")

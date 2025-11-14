@@ -16,7 +16,8 @@ app = FastAPI(title="Excel Uploader API", version="1.0")
 # ⚙️ CORS - permitir orígenes locales
 origins = [
     "http://localhost:8080",  # Frontend Angular
-    "http://127.0.0.1:8080"
+    "http://127.0.0.1:8080",
+    "http://localhost:4200",
 ]
 
 app.add_middleware(
