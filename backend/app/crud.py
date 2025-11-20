@@ -92,3 +92,51 @@ def get_chart_data(db: Session):
 
     # Convierte los resultados en una lista de diccionarios legibles
     return [{"producto": r.producto, "total": r.total} for r in results]
+
+# ------------------ CRUD manual para ExcelData ------------------
+
+def get_excel_data_by_id(db: Session, data_id: int):
+    """
+    Obtiene un registro específico de ExcelData por su ID.
+    """
+    return db.query(models.ExcelData).filter(models.ExcelData.id == data_id).first()
+
+
+def create_excel_data(db: Session, data: schemas.ExcelDataCreate):
+    """
+    Crea un nuevo registro en ExcelData.
+    """
+    db_data = models.ExcelData(**data.dict())
+    db.add(db_data)
+    db.commit()
+    db.refresh(db_data)
+    return db_data
+
+
+def update_excel_data(db: Session, data_id: int, data: schemas.ExcelDataCreate):
+    """
+    Actualiza un registro existente en ExcelData.
+    """
+    db_data = db.query(models.ExcelData).filter(models.ExcelData.id == data_id).first()
+    if not db_data:
+        return None
+
+    for key, value in data.dict().items():
+        setattr(db_data, key, value)
+
+    db.commit()
+    db.refresh(db_data)
+    return db_data
+
+
+def delete_excel_data(db: Session, data_id: int):
+    """
+    Elimina un registro de ExcelData por su ID.
+    """
+    db_data = db.query(models.ExcelData).filter(models.ExcelData.id == data_id).first()
+    if not db_data:
+        return False
+
+    db.delete(db_data)
+    db.commit()
+    return True

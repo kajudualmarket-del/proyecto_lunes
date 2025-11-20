@@ -16,6 +16,14 @@ from dotenv import load_dotenv
 import shutil
 import time
 import logging
+from app.schemas import ExcelDataCreate, ExcelDataResponse, APIResponse
+from app.crud import (
+    get_all_excel_data,
+    get_excel_data_by_id,
+    create_excel_data,
+    update_excel_data,
+    delete_excel_data
+)
 
 # Cargar variables del archivo .env ubicado en el proyecto raíz
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../../.env"))
@@ -293,3 +301,69 @@ def get_chart_data(db: Session = Depends(get_db)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener datos del gráfico: {e}")
+
+# ================================
+# CRUD manual para ExcelData
+# ================================
+
+@router.get("/data", response_model=APIResponse)
+def list_excel_data(db: Session = Depends(get_db)):
+    """Lista todos los registros de ExcelData."""
+    data = get_all_excel_data(db)
+    serialized = [ExcelDataResponse.model_validate(d, from_attributes=True) for d in data]
+
+    return utils.response_json(
+        status="success",
+        type="list",
+        title="Datos cargados",
+        message="Lista de registros en ExcelData",
+        data={"items": serialized}
+    )
+
+
+@router.post("/data", response_model=APIResponse)
+def create_excel_data_endpoint(payload: ExcelDataCreate, db: Session = Depends(get_db)):
+    """Crea un nuevo registro en ExcelData."""
+    new_data = create_excel_data(db, payload)
+    serialized = ExcelDataResponse.model_validate(new_data, from_attributes=True)
+
+    return utils.response_json(
+        status="success",
+        type="create",
+        title="Registro creado",
+        message="Nuevo registro agregado correctamente",
+        data={"item": serialized}
+    )
+
+
+@router.put("/data/{data_id}", response_model=APIResponse)
+def update_excel_data_endpoint(data_id: int, payload: ExcelDataCreate, db: Session = Depends(get_db)):
+    """Actualiza un registro existente en ExcelData."""
+    updated = update_excel_data(db, data_id, payload)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Registro no encontrado")
+
+    serialized = ExcelDataResponse.model_validate(updated, from_attributes=True)
+
+    return utils.response_json(
+        status="success",
+        type="update",
+        title="Registro actualizado",
+        message="Registro modificado correctamente",
+        data={"item": serialized}
+    )
+
+
+@router.delete("/data/{data_id}", response_model=APIResponse)
+def delete_excel_data_endpoint(data_id: int, db: Session = Depends(get_db)):
+    """Elimina un registro de ExcelData por su ID."""
+    deleted = delete_excel_data(db, data_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Registro no encontrado")
+
+    return utils.response_json(
+        status="success",
+        type="delete",
+        title="Registro eliminado",
+        message="Registro eliminado correctamente"
+    )
