@@ -66,11 +66,11 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${FRONTEND_PORT}:4200"
+      - "${FRONTEND_PORT}:8080"
     networks:
       - internal_net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -85,3 +85,4 @@ networks:
 
 volumes:
   mysql_data:
+

@@ -1,1 +1,80 @@
-/* You can add global styles to this file, and also import other style files */
+/* === Estilos globales === */
+:root {
+  --primary: #4f46e5;
+  --primary-light: #818cf8;
+  --accent: #00c8ff;
+  --bg: #f9fafb;
+  --text: #1f2937;
+  --card-bg: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* 🌙 Tema oscuro */
+body.dark-theme {
+  --primary: #6366f1;
+  --primary-light: #8b5cf6;
+  --accent: #00e5ff;
+  --bg: #111827;
+  --text: #f3f4f6;
+  --card-bg: #1f2937;
+  --shadow: rgba(255, 255, 255, 0.05);
+}
+
+/* Reset y base */
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.4s, color 0.4s;
+}
+
+h1, h2, h3, h4 {
+  color: var(--primary);
+}
+
+button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+button:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.card {
+  background: var(--card-bg);
+  box-shadow: 0 4px 14px var(--shadow);
+  border-radius: 12px;
+  padding: 20px;
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid var(--primary-light);
+}
+
+th {
+  background-color: var(--primary);
+  color: white;
+}
+
+tr:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+  transition: 0.2s;
+}

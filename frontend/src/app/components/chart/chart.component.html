@@ -1,7 +1,15 @@
-<div style="display: block;">
-  <canvas baseChart
-          [data]="chartData"
-          [options]="chartOptions"
-          chartType="bar">
+<div *ngIf="hasData; else noData" style="display: block;">
+  <canvas
+    baseChart
+    [data]="chartData"
+    [options]="chartOptions"
+    chartType="bar">
   </canvas>
 </div>
+
+<ng-template #noData>
+  <p style="text-align: center; color: #888; margin-top: 1rem;">
+    📊 No hay datos para mostrar aún.  
+    Sube un archivo y presiona <strong>Insertar</strong> para ver el gráfico.
+  </p>
+</ng-template>

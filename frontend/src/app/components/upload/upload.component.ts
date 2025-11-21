@@ -3,7 +3,7 @@ import { HttpEventType } from '@angular/common/http';
 import { ExcelService } from '../../services/excel.service';
 import { ExcelFile } from '../../models/excel-file.model';
 import { CommonModule } from '@angular/common';
-import { ChartComponent } from '../chart/chart.component'; // Importa el chart
+import { ChartComponent } from '../chart/chart.component';
 
 @Component({
   selector: 'app-upload',
@@ -18,15 +18,16 @@ export class UploadComponent {
   message = '';
   files: ExcelFile[] = [];
   previewData: any = null;
-
-  // NUEVO: datos para el gráfico
   chartData: any = null;
+  emptySheets: string[] = [];
+  inserting = false;
+
+  Object = Object;
 
   constructor(private excelService: ExcelService) {}
 
   ngOnInit(): void {
     this.loadFiles();
-    this.fetchChartData(); // NUEVO: carga inicial del gráfico
   }
 
   onFileSelected(event: any): void {
@@ -44,21 +45,23 @@ export class UploadComponent {
       return;
     }
 
+    this.previewData = null;
+    this.chartData = null;
+    this.uploadProgress = 0;
+    this.message = '';
+
     this.excelService.uploadExcel(this.selectedFile).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress && event.total) {
           this.uploadProgress = Math.round((100 * event.loaded) / event.total);
         } else if (event.type === HttpEventType.Response) {
-          this.message = 'Archivo subido correctamente';
+          this.message = '✅ Archivo subido correctamente';
           this.uploadProgress = 100;
           this.loadFiles();
-
-          // NUEVO: actualizar gráfico después de subir
-          this.fetchChartData();
         }
       },
       error: () => {
-        this.message = 'Error al subir archivo';
+        this.message = '❌ Error al subir archivo';
       }
     });
   }
@@ -71,28 +74,54 @@ export class UploadComponent {
   }
 
   showPreview(fileId: number): void {
+    this.chartData = null;
+    this.previewData = null;
+    this.emptySheets = [];
+
     this.excelService.getExcelPreview(fileId).subscribe({
-      next: (data) => (this.previewData = data),
+      next: (data) => {
+        this.previewData = data;
+        if (Array.isArray(data)) {
+          data.forEach((sheet: any) => {
+            if (!sheet.datos || sheet.datos.length === 0) {
+              this.emptySheets.push(sheet.nombre);
+            }
+          });
+        }
+        if (this.emptySheets.length > 0) {
+          alert(`⚠️ Las siguientes hojas están vacías:\n${this.emptySheets.join(', ')}`);
+        }
+      },
       error: () => alert('Error al obtener previsualización')
     });
   }
 
   insertData(fileId: number): void {
+    if (this.inserting) return;
+    this.inserting = true;
     this.uploadProgress = 0;
+
+    const button = document.activeElement as HTMLElement;
+    button.classList.add('loading');
+
     const interval = setInterval(() => {
-      if (this.uploadProgress < 100) this.uploadProgress += 5;
+      if (this.uploadProgress < 95) this.uploadProgress += 5;
       else clearInterval(interval);
     }, 100);
 
     this.excelService.insertExcelData(fileId).subscribe({
       next: () => {
-        alert('Datos insertados correctamente');
         this.uploadProgress = 100;
-
-        // NUEVO: actualizar gráfico después de insertar
+        this.inserting = false;
+        button.classList.remove('loading');
+        alert('✅ Datos insertados correctamente');
         this.fetchChartData();
       },
-      error: () => alert('Error al insertar datos')
+      error: () => {
+        alert('❌ Error al insertar datos');
+        this.inserting = false;
+        button.classList.remove('loading');
+      }
     });
   }
 
@@ -101,7 +130,6 @@ export class UploadComponent {
       this.excelService.deleteFile(id).subscribe({
         next: () => {
           this.loadFiles();
-          // NUEVO: actualizar gráfico después de eliminar
           this.fetchChartData();
         },
         error: () => alert('Error al eliminar archivo')
@@ -109,12 +137,9 @@ export class UploadComponent {
     }
   }
 
-  // NUEVO: método para obtener datos del gráfico
   fetchChartData(): void {
     this.excelService.getChartData().subscribe({
-      next: (data) => {
-        this.chartData = data;
-      },
+      next: (chart) => (this.chartData = chart || []),
       error: () => console.error('Error al obtener datos del gráfico')
     });
   }

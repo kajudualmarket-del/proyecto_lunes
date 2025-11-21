@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpEvent, HttpRequest } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, map } from 'rxjs';
 import { ExcelFile } from '../models/excel-file.model';
 import { ExcelData } from '../models/excel-data.model';
 
@@ -8,9 +8,8 @@ import { ExcelData } from '../models/excel-data.model';
   providedIn: 'root'
 })
 export class ExcelService {
-  private baseUrl = 'http://localhost:8009'; // Backend FastAPI
+  private baseUrl = 'http://localhost:8009'; // ⚠️ Ajusta el puerto si es distinto
 
-  // NUEVO: BehaviorSubject para los datos del chart
   private chartDataSubject = new BehaviorSubject<ExcelData[]>([]);
   chartData$ = this.chartDataSubject.asObservable();
 
@@ -28,11 +27,13 @@ export class ExcelService {
   }
 
   getFiles(): Observable<ExcelFile[]> {
-    return this.http.get<ExcelFile[]>(`${this.baseUrl}/files`);
+    return this.http.get<any>(`${this.baseUrl}/files`).pipe(
+      map((response) => response?.data?.files || [])
+    );
   }
 
   getExcelPreview(id: number): Observable<ExcelData[]> {
-    return this.http.get<ExcelData[]>(`${this.baseUrl}/files/${id}`);
+    return this.http.get<ExcelData[]>(`${this.baseUrl}/files/preview/${id}`);
   }
 
   insertExcelData(id: number): Observable<any> {
@@ -43,19 +44,21 @@ export class ExcelService {
     return this.http.delete(`${this.baseUrl}/files/${id}`);
   }
 
-  getChartData(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/files/chart`);
+  // ✅ Devuelve directamente el array limpio del backend (data.chart)
+  getChartData(): Observable<ExcelData[]> {
+    return this.http.get<any>(`${this.baseUrl}/files/chart`).pipe(
+      map((response) => response?.data?.chart || [])
+    );
   }
 
-  // NUEVO: actualizar chartData
   setChartData(data: ExcelData[]) {
     this.chartDataSubject.next(data);
   }
 
-  // NUEVO: obtener datos y actualizar automáticamente el BehaviorSubject
   fetchChartData() {
-    this.getChartData().subscribe((data: ExcelData[]) => {
-      this.setChartData(data);
+    this.getChartData().subscribe({
+      next: (data: ExcelData[]) => this.setChartData(data),
+      error: (err) => console.error('Error al obtener datos del gráfico:', err)
     });
   }
 }

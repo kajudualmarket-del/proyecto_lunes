@@ -7,6 +7,9 @@ Incluye la estandarización de respuestas y validaciones generales.
 from fastapi import HTTPException
 from app.schemas import APIResponse
 
+
+# ------------------ Función para generar respuestas JSON estandarizadas ------------------
+# Esta función crea una estructura uniforme para todas las respuestas de la API.
 def response_json(
     status: str,
     type: str,
@@ -39,6 +42,8 @@ def response_json(
     }
 
 
+# ------------------ Función para validar columnas de archivos Excel ------------------
+# Comprueba que las columnas del Excel coincidan con las columnas requeridas.
 def validate_excel_columns(columns: list, required_columns: list):
     """
     Verifica que las columnas de un Excel coincidan con las esperadas.
@@ -50,6 +55,7 @@ def validate_excel_columns(columns: list, required_columns: list):
     Retorna:
         bool: True si todas las columnas existen
     """
+    # Compara listas y detecta columnas faltantes (ignorando mayúsculas/minúsculas)
     missing = [col for col in required_columns if col.lower() not in [c.lower() for c in columns]]
     if missing:
         raise HTTPException(status_code=400, detail=f"Columnas faltantes: {', '.join(missing)}")
